@@ -1,2 +1,2 @@
 # ArduinoEncrypter
-Encrypt data between arduino and Cpp interface
+Encrypt data between arduino and C++ interface
