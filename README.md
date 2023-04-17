@@ -12,7 +12,7 @@ Use this [git](https://github.com/gpg/gnupg) as reference documentation.
 - [ ] [Code] PC connection with TCP to Arduino
 - [ ] [Code] Arduino connection with TCP to PC
 - [ ] [Code] Arduino create gpg key and save it to EEPROM 
-- [ ] [code] PC create symetric key
+- [ ] [Code] PC create symetric key
 - [ ] [Code] Dialog between Arduino and PC to exchange symetric key
 - [ ] [Code] Arduino encrypt with sym key (must use smth as "Mode Cipher Block Chaining")
 - [ ] [Code] PC decrypt 
