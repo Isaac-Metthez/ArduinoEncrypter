@@ -61,41 +61,38 @@ namespace	encrypt
     uint8_t dhF[KeySize];
     uint8_t dhK[KeySize];
 
-    // Base64.encode((char*)message, (char*)_publicKey, KeySize);
-    // client.write((char*)message);
-
-    // while(!client.available()){};
-    
-    // if (client.readString() == String("refuse"))
-    // { 
-    //   return;// to do abort
-    // }
-
-
-    // Curve25519::dh1(dhK, dhF);
-   
-
-    // Ed25519::sign
-    //   (
-    //   signature,
-    //   _privateKey, 
-    //   _publicKey, 
-    //   message, 
-    //   Base64.encode((char*)message, (char*)dhK, KeySize)
-    //   );
-
-    // client.write((char*)message);
-    // client.write(signature, SignSize);
+    Base64.encode((char*)message, (char*)_publicKey, KeySize);
+    client.write((char*)message);
 
     while(!client.available()){};
-    for (uint8_t i = 0; i< KeySizeBase64 ; i++)
+    if (client.readString() == String("refuse"))
+    { 
+      return;// to do abort
+    }
+
+    Curve25519::dh1(dhK, dhF);
+   
+
+    Ed25519::sign
+      (
+      signature,
+      _privateKey, 
+      _publicKey, 
+      message, 
+      Base64.encode((char*)message, (char*)dhK, KeySize)
+      );
+
+    client.write((char*)message);
+    client.write(signature, SignSize);
+    
+    while(KeySizeBase64 > client.available()){};
+    for (uint8_t i = 0; i < KeySizeBase64 ; i++)
     {
       message [i] = client.read();
     }
-    Base64.decode((char*)dhK, (char*)message , KeySizeBase64);
 
-    while(!client.available()){};
-    for (uint8_t i = 0; i< SignSize ; i++)
+    while(SignSize > client.available()){};
+    for (uint8_t i = 0; i < SignSize ; i++)
     {
       signature [i] = client.read();
     }
@@ -103,10 +100,11 @@ namespace	encrypt
     bool valid = Ed25519::verify(signature, _serverKey , message, KeySizeBase64);
     if (!valid)
     {
-      client.write((char*)message);
       client.write("You are a liar");
       return;// to do abort
     }
+    
+    Base64.decode((char*)dhK, (char*)message , KeySizeBase64);
 
     Curve25519::dh2(dhK, dhF);
     memcpy(_sharedKey,dhK,KeySize);
@@ -122,6 +120,6 @@ namespace	encrypt
     // while(!client.available()){};
     // memcpy((char*)message,client.readString().c_str(),KeySizeBase64);
     // Base64.decode((char*)_serverKey, (char*)message , KeySizeBase64);
-    Base64.decode((char*)_serverKey, "+LgjYQMvTnEuTi4DLzP1cPVBEdyvwt1+sU6q4FJnpcg=+LgjYQMvTnEuTi4DLzP1cPVBEdyvwt1+sU6q4FJnpcg=", KeySizeBase64);
+    Base64.decode((char*)_serverKey, "GskUXMWVAz26Ko+AAywcB75HGZurjfnznrgsxaSY1mc=", KeySizeBase64);
   }
 }

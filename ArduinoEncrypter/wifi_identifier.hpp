@@ -1,3 +1,5 @@
+#ifndef IDENTIFIERS_hpp
+#define IDENTIFIERS_hpp
 namespace wifi
 {
 	namespace	identifier
@@ -6,3 +8,4 @@ namespace wifi
       constexpr char *PassWord = "";
   }
 }
+#endif
