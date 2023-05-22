@@ -1,13 +1,12 @@
-#include "Curve25519.h"
 #include "keys.hpp"
 namespace	encrypt
 {
-  keys::keys()
+  Keys::Keys()
   {
     RNG.begin("Arduino Encrypter");
   }
 
-  void keys::load()
+  void Keys::load()
   {
     for (int i = 0 ; i < KeySize; i++ )
     {
@@ -19,9 +18,14 @@ namespace	encrypt
       _publicKey[i] = EEPROM.read(persistent::PublicKey + i);
     }
     
+    for (int i = 0 ; i < KeySize; i++ )
+    {
+      _serverKey[i] = EEPROM.read(persistent::ServerKey + i);
+    }
+
   }
   
-  void keys::save()
+  void Keys::save()
   {
     for (int i = 0 ; i < KeySize; i++ )
     {
@@ -32,16 +36,22 @@ namespace	encrypt
     {
       EEPROM.update(persistent::PublicKey + i,_publicKey[i]);
     }
+    
+    for (int i = 0 ; i < KeySize; i++ )
+    {
+      EEPROM.update(persistent::ServerKey + i,_serverKey[i]);
+    }
+    
     EEPROM.commit();
   }
   
-  void keys::renew()
+  void Keys::renew()
   {
     Ed25519::generatePrivateKey(_privateKey);
     Ed25519::derivePublicKey(_publicKey,_privateKey);
   }
 
-  void keys::init(TransistorNoiseSource noise)
+  void Keys::init(TransistorNoiseSource noise)
   {
     RNG.addNoiseSource(noise);
     load();
@@ -49,12 +59,13 @@ namespace	encrypt
     Ed25519::derivePublicKey(publicKey, _privateKey);
     if (memcmp(publicKey, _publicKey, 32))
     {
+        Base64.decode((char*)_serverKey, ServerKey, KeySizeBase64);
         renew();
         save();
     }
   }
   
-  void keys::agree(WiFiClient &client)
+  void Keys::agree(WiFiClient &client)
   {  
     uint8_t message[64];
     uint8_t signature[SignSize];
@@ -112,7 +123,7 @@ namespace	encrypt
 
     client.write(_sharedKey, KeySize);
   }
-  void keys::askServerPub(WiFiClient &client)
+  void Keys::askServerPub(WiFiClient &client)
   {
     // uint8_t message[64];
     // client.write("Please can you send your public key");
@@ -120,6 +131,6 @@ namespace	encrypt
     // while(!client.available()){};
     // memcpy((char*)message,client.readString().c_str(),KeySizeBase64);
     // Base64.decode((char*)_serverKey, (char*)message , KeySizeBase64);
-    Base64.decode((char*)_serverKey, "GskUXMWVAz26Ko+AAywcB75HGZurjfnznrgsxaSY1mc=", KeySizeBase64);
+    // Base64.decode((char*)_serverKey, "GskUXMWVAz26Ko+AAywcB75HGZurjfnznrgsxaSY1mc=", KeySizeBase64);
   }
 }

@@ -1,5 +1,5 @@
-#ifndef CONNECTION_hpp
-#define CONNECTION_hpp
+#ifndef CONNECTION
+#define CONNECTION
 #include <SPI.h>
 #include <WiFiNINA.h>
 #include <utility/ProgMemUtil.h>
@@ -14,9 +14,6 @@ namespace	wifi
   protected:
     WiFiClient _client;
   public:
-    connection() = default;
-    ~connection() = default;
-
     void connect();
 
     WiFiClient &getClient() {return _client;};
