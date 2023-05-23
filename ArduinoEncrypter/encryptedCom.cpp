@@ -1,3 +1,4 @@
+#include "variant.h"
 #include "encryptedCom.hpp"
 
 namespace	communication
@@ -18,38 +19,80 @@ namespace	communication
 
   void EncryptedCom::loop()
   {
-  }
-
-  // void EncryptedCom::send(const uint8_t * buffer,const int size)
-  // {
-  // //   uint8_t output[64];
-  // //   const uint8_t pt[] = "encryted works ?";
-  // //   const uint8_t pt2[] = "encryted works, I hope so but it's never sure... I try with many blocks";
-  // //   int size = _encryptor.encrypt(pt, output, sizeof(pt));
-  // //   _connection.getClient().write(output,size);
-  // //   size = _encryptor.encrypt(pt2, output, sizeof(pt2));
-  // //   _connection.getClient().write(output,size);
-  //   // size = _encryptor.encrypt((uint8_t*)"block", output,5);
-  //   // _connection.getClient().write(output,size);
-  // }
-
-  void EncryptedCom::send(const String &message)
-  {
-    constexpr auto Size = 256;
-    uint8_t output[Size];
-    int numberMessage = message.length()/Size;
-
-    for (int i = 0 ; i <= numberMessage; i++)
+    String test;
+    int size = receive(test);
+    if (test.length())
     {
-      int messageLength = Size;
-      if (i == numberMessage)
-        messageLength = message.length()%Size == 0 ? Size : message.length()%Size;
-      int size = _encryptor.encrypt((uint8_t*)message.c_str(), output, messageLength);
-      _connection.getClient().write(output,size);
+      send(test);
     }
   }
 
-  void EncryptedCom::receive()
+  void EncryptedCom::send(const uint8_t * data, const int dataSize)
   {
+    constexpr auto OneMsgSize = 256;
+    uint8_t send[OneMsgSize];
+    int numberMessage = dataSize/OneMsgSize;
+
+    for (int i = 0 ; i <= numberMessage; i++)
+    {
+      int messageLength = OneMsgSize;
+      if (i == numberMessage)
+        messageLength = dataSize%OneMsgSize == 0 ? OneMsgSize : dataSize%OneMsgSize;
+      int size = _encryptor.encrypt(data, send, messageLength);
+      _connection.getClient().write(send, size);
+      data += OneMsgSize;
+    }
+  }
+
+  void EncryptedCom::send(const String &message)
+  {
+    constexpr auto OneMsgSize = 256;
+    uint8_t send[OneMsgSize];
+    int numberMessage = message.length()/OneMsgSize;
+    const uint8_t* strMessage = (uint8_t*)message.c_str();
+
+    for (int i = 0 ; i <= numberMessage; i++)
+    {
+      int messageLength = OneMsgSize;
+      if (i == numberMessage)
+        messageLength = message.length()%OneMsgSize == 0 ? OneMsgSize : message.length()%OneMsgSize;
+      int size = _encryptor.encrypt(strMessage, send, messageLength);
+      _connection.getClient().write(send, size);
+      strMessage += OneMsgSize;
+    }
+  }
+
+  int EncryptedCom::receive(uint8_t * data, int dataSize)
+  {
+    uint8_t received[encrypt::BlockSize];
+    int i = 0;
+    while (_connection.getClient().available() >= encrypt::BlockSize 
+          && i + encrypt::BlockSize <= dataSize)
+    {
+      _connection.getClient().read(received,encrypt::BlockSize);
+      _encryptor.decrypt(received, data, encrypt::BlockSize);
+      i += encrypt::BlockSize;
+    }
+    return i;
+  }
+
+  int EncryptedCom::receive(String &message, int maxLen)
+  {
+    int i = 0;
+    uint8_t received[encrypt::BlockSize + 1];
+    received[encrypt::BlockSize] = 0;
+    message = "";
+    
+    while (_connection.getClient().available() >= encrypt::BlockSize 
+          && i + encrypt::BlockSize <= maxLen
+          && message.length() == i*encrypt::BlockSize)
+    {
+      _connection.getClient().read(received,encrypt::BlockSize);
+      _encryptor.decrypt(received, received, encrypt::BlockSize);
+      message += (char*)received;
+      i += encrypt::BlockSize;
+      Serial.println(message);
+    }
+    return message.length();
   }
 }

@@ -19,9 +19,10 @@ namespace	communication
   EncryptedCom();
   void setup();
   void loop();
-  // void send(uint8_t * buffer,int size);
+  void send(const uint8_t * data, const int dataSize);
   void send(const String &message);
-  void receive();
+  int receive(uint8_t * data, int dataSize);
+  int receive(String &message, int maxLen = 255);
   };
 }
 #endif

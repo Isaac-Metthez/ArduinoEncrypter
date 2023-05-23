@@ -53,9 +53,19 @@ namespace	encrypt
     return result;
   }
   
-  int Encryptor::decrypt(const uint8_t *ciphertext, uint8_t *plaintext, int size)
+  void Encryptor::decrypt(const uint8_t *ciphertext, uint8_t *plaintext, int size)
   {
-    return 0;
-    // _aes.decryptBlock();
+    int blockDecrypted[BlockSize/sizeof(int)];
+    for (int j = 0; j < size/BlockSize; j++)
+    {     
+      _aes.decryptBlock((uint8_t*)blockDecrypted,ciphertext);
+      for (uint8_t i = 0; i < BlockSize/sizeof(int) ; i++)
+      {
+        ((int*)plaintext)[i] = blockDecrypted[i] ^ lastCipherTextDecrypt[i];
+      }
+      memcpy(lastCipherTextDecrypt,ciphertext, BlockSize);
+      ciphertext += BlockSize;
+      plaintext += BlockSize;
+    }
   }
 }

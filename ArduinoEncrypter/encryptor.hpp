@@ -19,7 +19,7 @@ namespace	encrypt
 
     void setKey(const uint8_t *sharedKey);
     int encrypt(const uint8_t *plaintext, uint8_t *ciphertext, int size);
-    int decrypt(const uint8_t *ciphertext, uint8_t *plaintext, int size);
+    void decrypt(const uint8_t *ciphertext, uint8_t *plaintext, int size);
   };
 }
 #endif
