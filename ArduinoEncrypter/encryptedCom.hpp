@@ -18,6 +18,8 @@ namespace	communication
   EncryptedCom();
   void setup();
   void loop();
+  void send();
+  void receive();
   };
 }
 #endif

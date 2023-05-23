@@ -9,6 +9,8 @@ namespace	globals
 void setup()
 {
   globals::com.setup();
+
+  globals::com.send();
 }
 void loop()
 {

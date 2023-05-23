@@ -7,15 +7,20 @@
 
 namespace	encrypt
 {
+  constexpr auto BlockSize = 16;
   class Encryptor
   {
   protected:
     AES256 _aes;
-    Keys &_keys;
+    int lastCipherTextEncrypt[BlockSize/sizeof(int)] ;
+    int lastCipherTextDecrypt[BlockSize/sizeof(int)]  ;
   public:
-    Encryptor(Keys &keys);
-    void encypt( String &message , uint8_t *buffer);
-    void decrypt(uint8_t *buffer, String &message);
+    Encryptor(uint8_t fillInitialVector = 0);
+    Encryptor(const uint8_t * initialVector);
+
+    void setKey(const uint8_t *sharedKey);
+    int encrypt(const String &message , uint8_t *buffer);
+    int decrypt(uint8_t *buffer,const String &message, int size);
   };
 }
 #endif
