@@ -1,7 +1,8 @@
-#include <stdint.h>
 #ifndef ENCRYPTEDCOM
 #define ENCRYPTEDCOM
+#include <stdint.h>
 #include <TransistorNoiseSource.h>
+#include <string.h>
 #include "keys.hpp"
 #include "connection.hpp"
 #include "encryptor.hpp"
@@ -18,7 +19,8 @@ namespace	communication
   EncryptedCom();
   void setup();
   void loop();
-  void send();
+  // void send(uint8_t * buffer,int size);
+  void send(const String &message);
   void receive();
   };
 }

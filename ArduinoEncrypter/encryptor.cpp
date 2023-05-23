@@ -16,18 +16,16 @@ namespace	encrypt
   {
     _aes.setKey(sharedKey , KeySize);
   }
-  
-  int Encryptor::encrypt(const String &message , uint8_t *buffer)
+
+  int Encryptor::encrypt(const uint8_t *plaintext, uint8_t *ciphertext, int size)
   {
-    uint8_t *output = buffer;
-    const int *plaintext =  (const int*)message.c_str();
     int blockToEncrypt[BlockSize/sizeof(int)];
-    int blocksQuantity = message.length()/BlockSize;
-    int notToStuff = message.length()%BlockSize;
+    int blocksQuantity = size/BlockSize;
+    int notToStuff = size%BlockSize;
     int result = 0;
-    for (int j = 0; j <= blocksQuantity ; j++)
+    for (int j = 0; j <= blocksQuantity; j++)
     {
-      if (j == blocksQuantity )
+      if (j == blocksQuantity)
       {
         if (notToStuff == 0)
         {
@@ -35,7 +33,7 @@ namespace	encrypt
         }
         for (uint8_t i = 0; i < BlockSize ; i++)
         {
-          uint8_t toXOR =  i < notToStuff ? ((uint8_t*)plaintext)[i] : 0;
+          uint8_t toXOR =  i < notToStuff ? plaintext[i] : 0;
           ((uint8_t*)blockToEncrypt)[i] = toXOR ^ ((uint8_t*)lastCipherTextEncrypt)[i];
         }
       }
@@ -43,19 +41,19 @@ namespace	encrypt
       {     
         for (uint8_t i = 0; i < BlockSize/sizeof(int) ; i++)
         {
-          blockToEncrypt[i] = plaintext[i] ^ lastCipherTextEncrypt[i];
+          blockToEncrypt[i] =((const int*)plaintext)[i] ^ lastCipherTextEncrypt[i];
         }
       }
-      _aes.encryptBlock(output,(uint8_t*)blockToEncrypt);
-      memcpy(lastCipherTextEncrypt,output, BlockSize);
-      output += BlockSize;
-      plaintext += BlockSize/sizeof(int);
+      _aes.encryptBlock(ciphertext,(uint8_t*)blockToEncrypt);
+      memcpy(lastCipherTextEncrypt,ciphertext, BlockSize);
+      ciphertext += BlockSize;
+      plaintext += BlockSize;
       result += BlockSize;
     }
     return result;
   }
   
-  int Encryptor::decrypt(uint8_t *buffer,const String &message , int size)
+  int Encryptor::decrypt(const uint8_t *ciphertext, uint8_t *plaintext, int size)
   {
     return 0;
     // _aes.decryptBlock();

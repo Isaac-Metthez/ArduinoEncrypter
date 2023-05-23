@@ -2,7 +2,6 @@
 #define CIPHER
 #include <Crypto.h>
 #include <AES.h>
-#include <string.h>
 #include "keys.hpp"
 
 namespace	encrypt
@@ -19,8 +18,8 @@ namespace	encrypt
     Encryptor(const uint8_t * initialVector);
 
     void setKey(const uint8_t *sharedKey);
-    int encrypt(const String &message , uint8_t *buffer);
-    int decrypt(uint8_t *buffer,const String &message, int size);
+    int encrypt(const uint8_t *plaintext, uint8_t *ciphertext, int size);
+    int decrypt(const uint8_t *ciphertext, uint8_t *plaintext, int size);
   };
 }
 #endif
