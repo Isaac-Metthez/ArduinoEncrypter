@@ -1,11 +1,11 @@
 # ArduinoEncrypter
 Encrypt data between arduino and C++ interface
-
-[gnupg2 git](https://github.com/gpg/gnupg) as reference documentation.
-[arduino crypto reference](https://rweather.github.io/arduinolibs/crypto.html)
-[wikipedia EdDSA (signature)](https://en.wikipedia.org/wiki/EdDSA)
-[wikipwdia Curve25519 (shared key)](https://en.wikipedia.org/wiki/Curve25519)
-[wikipedia encryption mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation)
+## References
+- [gnupg2 git](https://github.com/gpg/gnupg)
+- [arduino crypto reference](https://rweather.github.io/arduinolibs/crypto.html)
+- [wikipedia EdDSA (signature)](https://en.wikipedia.org/wiki/EdDSA)
+- [wikipwdia Curve25519 (shared key)](https://en.wikipedia.org/wiki/Curve25519)
+- [wikipedia encryption mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation)
 
 ## Tasks
 
