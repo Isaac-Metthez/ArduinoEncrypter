@@ -11,8 +11,8 @@ namespace	encrypt
   {
   protected:
     AES256 _aes;
-    int lastCipherTextEncrypt[BlockSize/sizeof(int)] ;
-    int lastCipherTextDecrypt[BlockSize/sizeof(int)]  ;
+    int _lastCipherTextEncrypt[BlockSize/sizeof(int)] ;
+    int _lastCipherTextDecrypt[BlockSize/sizeof(int)] ;
   public:
     Encryptor(uint8_t fillInitialVector = 0);
     Encryptor(const uint8_t * initialVector);

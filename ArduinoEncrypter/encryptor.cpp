@@ -3,13 +3,13 @@ namespace	encrypt
 {
   Encryptor::Encryptor(uint8_t fillInitialVector)
   {
-      memset(lastCipherTextEncrypt,fillInitialVector, BlockSize);
-      memset(lastCipherTextDecrypt,fillInitialVector, BlockSize);
+      memset(_lastCipherTextEncrypt,fillInitialVector, BlockSize);
+      memset(_lastCipherTextDecrypt,fillInitialVector, BlockSize);
   }
   Encryptor::Encryptor(const uint8_t *initialVector)
   {
-      memcpy(lastCipherTextEncrypt,initialVector, BlockSize);
-      memcpy(lastCipherTextDecrypt,initialVector, BlockSize);
+      memcpy(_lastCipherTextEncrypt,initialVector, BlockSize);
+      memcpy(_lastCipherTextDecrypt,initialVector, BlockSize);
   }
 
   void Encryptor::setKey(const uint8_t *sharedKey)
@@ -34,18 +34,18 @@ namespace	encrypt
         for (uint8_t i = 0; i < BlockSize ; i++)
         {
           uint8_t toXOR =  i < notToStuff ? plaintext[i] : 0;
-          ((uint8_t*)blockToEncrypt)[i] = toXOR ^ ((uint8_t*)lastCipherTextEncrypt)[i];
+          ((uint8_t*)blockToEncrypt)[i] = toXOR ^ ((uint8_t*)_lastCipherTextEncrypt)[i];
         }
       }
       else
       {     
         for (uint8_t i = 0; i < BlockSize/sizeof(int) ; i++)
         {
-          blockToEncrypt[i] =((const int*)plaintext)[i] ^ lastCipherTextEncrypt[i];
+          blockToEncrypt[i] =((const int*)plaintext)[i] ^ _lastCipherTextEncrypt[i];
         }
       }
       _aes.encryptBlock(ciphertext,(uint8_t*)blockToEncrypt);
-      memcpy(lastCipherTextEncrypt,ciphertext, BlockSize);
+      memcpy(_lastCipherTextEncrypt,ciphertext, BlockSize);
       ciphertext += BlockSize;
       plaintext += BlockSize;
       result += BlockSize;
@@ -61,9 +61,9 @@ namespace	encrypt
       _aes.decryptBlock((uint8_t*)blockDecrypted,ciphertext);
       for (uint8_t i = 0; i < BlockSize/sizeof(int) ; i++)
       {
-        ((int*)plaintext)[i] = blockDecrypted[i] ^ lastCipherTextDecrypt[i];
+        ((int*)plaintext)[i] = ((const int*)blockDecrypted)[i] ^ ((const int*)_lastCipherTextDecrypt)[i];
       }
-      memcpy(lastCipherTextDecrypt,ciphertext, BlockSize);
+      memcpy(_lastCipherTextDecrypt,ciphertext, BlockSize);
       ciphertext += BlockSize;
       plaintext += BlockSize;
     }

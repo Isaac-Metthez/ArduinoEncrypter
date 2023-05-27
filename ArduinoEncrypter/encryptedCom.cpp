@@ -79,19 +79,19 @@ namespace	communication
   int EncryptedCom::receive(String &message, int maxLen)
   {
     int i = 0;
-    uint8_t received[encrypt::BlockSize + 1];
-    received[encrypt::BlockSize] = 0;
+    uint8_t received[encrypt::BlockSize];
+    uint8_t decrypted[encrypt::BlockSize + 1];
+    decrypted[encrypt::BlockSize] = 0;
     message = "";
     
     while (_connection.getClient().available() >= encrypt::BlockSize 
           && i + encrypt::BlockSize <= maxLen
-          && message.length() == i*encrypt::BlockSize)
+          && message.length() == i)
     {
       _connection.getClient().read(received,encrypt::BlockSize);
-      _encryptor.decrypt(received, received, encrypt::BlockSize);
-      message += (char*)received;
+      _encryptor.decrypt(received, decrypted, encrypt::BlockSize);
+      message += (char*)decrypted;
       i += encrypt::BlockSize;
-      Serial.println(message);
     }
     return message.length();
   }
