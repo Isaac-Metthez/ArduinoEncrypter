@@ -1,4 +1,3 @@
-#include "variant.h"
 #include "encryptedCom.hpp"
 
 namespace	communication
@@ -19,12 +18,17 @@ namespace	communication
 
   void EncryptedCom::loop()
   {
-    String test;
-    int size = receive(test);
-    if (test.length())
+    delay(500);
+    for (digitalInput* input : _digitalsInputs)
     {
-      send(test);
+        input->setValue(true);
     }
+    delay(1000);
+    for (digitalInput* input : _digitalsInputs)
+    {
+        input->setValue(false);
+    }
+
   }
 
   void EncryptedCom::send(const uint8_t * data, const int dataSize)
@@ -71,6 +75,7 @@ namespace	communication
     {
       _connection.getClient().read(received,encrypt::BlockSize);
       _encryptor.decrypt(received, data, encrypt::BlockSize);
+      data += encrypt::BlockSize;
       i += encrypt::BlockSize;
     }
     return i;
