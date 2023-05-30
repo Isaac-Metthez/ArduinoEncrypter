@@ -9,9 +9,9 @@ namespace	communication
     protected:
       friend class EncryptedCom;
       void (*_setValue)(T);
-      void setValue(T value){_setValue(value);}
+      void set(T value){(*_setValue)(value);}
     public:
-      Input(void (*setValue)(T) = [](T x) -> void{}):_setValue(setValue){}
+      Input(void (*setValue)(T) ):_setValue(setValue){}
   };
   
   template<typename T = bool>
@@ -20,9 +20,9 @@ namespace	communication
     protected:
       friend class EncryptedCom;
       T (*_getValue)();
-      void getValue(T value){return _getValue();}
+      T get(){return (*_getValue)();}
     public:
-      Output(T (*getValue)() = []() -> bool {return false;}):_getValue(getValue){}
+      Output(T (*getValue)()):_getValue(getValue){}
   };
   
   typedef Input<bool> digitalInput;

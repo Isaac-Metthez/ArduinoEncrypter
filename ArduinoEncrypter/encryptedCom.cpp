@@ -1,9 +1,11 @@
+#include "api/Common.h"
 #include "encryptedCom.hpp"
 
 namespace	communication
 {
   EncryptedCom::EncryptedCom()
-  {}
+  {
+  }
 
   void EncryptedCom::setup()
   {
@@ -16,24 +18,83 @@ namespace	communication
     _encryptor.setKey(_keys.getSharedKey());
   }
 
+
   void EncryptedCom::loop()
+  {   
+    uint dataBuffer[MaxUintSizeComIO];
+    int received = receive((uint8_t*)dataBuffer, HeaderSizeInByte);
+
+    if (!(_digitalsOutputs.empty() &&  _analogOutputs.empty()))
+      outputsSend(dataBuffer);
+    if (received) // todo add control
+      inputsReceive(dataBuffer);
+    
+  }
+
+  void EncryptedCom::inputsReceive(uint* data)
   {
-    delay(500);
+    uint i = 0;
     for (digitalInput* input : _digitalsInputs)
-    {
-        input->setValue(true);
-    }
-    delay(1000);
-    for (digitalInput* input : _digitalsInputs)
-    {
-        input->setValue(false);
+    { 
+      uint8_t bitPos = i++ % encrypt::BitPerBlock;
+      if (!bitPos)
+      {
+        while(!receive((uint8_t *)data,encrypt::BlockSize));
+        data += LineSizeInUint;
+      }
+      input->set(bitRead(data[bitPos/encrypt::BitInUint], encrypt::BitInUint - bitPos%encrypt::BitInUint) );
     }
 
+    i = 0;
+    for (analogInput* input : _analogInputs)
+      { 
+        uint8_t intPos = i++ % encrypt::IntPerBlock;
+        if (!intPos)
+        {
+          while(!receive((uint8_t *)data,encrypt::BlockSize));
+          if (i)
+            data += LineSizeInUint;
+        }
+        input->set(data[intPos]);
+    }
+  }
+  
+  void EncryptedCom::outputsSend(uint* data)
+  {
+    uint messageLenght = 0;
+    uint i = 0;
+    for (digitalOutput* output : _digitalsOutputs)
+    { 
+      uint8_t bitPos = i++ % encrypt::BitPerBlock;
+      if (!bitPos)
+      {
+        while(!receive((uint8_t *)data,encrypt::BlockSize));
+        data += LineSizeInUint;
+        messageLenght += encrypt::BlockSize;
+      }
+      bitWrite(data[bitPos/encrypt::BitInUint], encrypt::BitInUint - bitPos%encrypt::BitInUint, output->get());
+    }
+
+    i = 0;
+    for (analogOutput* output : _analogOutputs)
+    { 
+      uint8_t intPos = i++ % encrypt::IntPerBlock;
+      if (!intPos)
+      {
+        while(!receive((uint8_t *)data,encrypt::BlockSize));
+        if (i)
+        {
+          data += LineSizeInUint;
+          messageLenght += encrypt::BlockSize;
+        }
+      }
+      data[intPos] = output->get();
+    }
+      send((uint8_t *)data,messageLenght);
   }
 
   void EncryptedCom::send(const uint8_t * data, const int dataSize)
   {
-    constexpr auto OneMsgSize = 256;
     uint8_t send[OneMsgSize];
     int numberMessage = dataSize/OneMsgSize;
 
@@ -50,7 +111,6 @@ namespace	communication
 
   void EncryptedCom::send(const String &message)
   {
-    constexpr auto OneMsgSize = 256;
     uint8_t send[OneMsgSize];
     int numberMessage = message.length()/OneMsgSize;
     const uint8_t* strMessage = (uint8_t*)message.c_str();

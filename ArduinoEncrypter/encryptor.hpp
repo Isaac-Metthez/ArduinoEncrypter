@@ -6,6 +6,9 @@
 
 namespace	encrypt
 {
+  constexpr auto BitPerBlock = 128;
+  constexpr auto BitInUint = 32;
+  constexpr auto IntPerBlock = 4;
   constexpr auto BlockSize = 16;
   class Encryptor
   {
