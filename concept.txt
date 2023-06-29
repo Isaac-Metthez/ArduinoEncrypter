@@ -1,0 +1,91 @@
+Arduino									                                  PC
+
+-------------------------------------------------------AUTHENTICATE---------------------------------------------------------------------									
+
+si puk faux --> close socket, exp backoff				          si oui --> continue
+si serveur pas vérifié --> close socket, exp backoff				  si non --> blacklist, close socket
+si serveur ferme socket --> exp backoff					          si pas vérifié --> close socket
+	
+-->AuPK "PUK"  DHPK  "DH PuK"  "sign (96 previous chars)"
+    4	  44	4	44		64
+									
+		AuPK "PUK"  DHPK  "DH PuK"  "sign (96 previous chars)"  <--
+		 4	  44    4       44		64				gros char* sa mère
+
+
+
+---------------------------------------------------------DATA---------------------------------------------------------------------------
+raw data for com without encryption
+---------------------------------------------------------AES DATA-----------------------------------------------------------------------
+AES encrypted data (CBC) Close connection if wrong sequence num
+---------------------------------------------------------SECURE DATA--------------------------------------------------------------------
+AES encrypted data with signature.  Close connection if wrong sequence num or signature
+
+--> Data "uint" "uint" "uint"
+     4	   4	  4	 4     
+   "bool_output" 
+    BOOL_OUTPUT_SIZE
+   "int_output"
+    INT_OUTPUT_SIZE
+    "signature (previous chars)"  if SECURE
+            64  
+					                      Data "uint" "uint" "uint" <--
+                                  4	   4	    4	     4     
+                                            "bool_input" 
+                                        BOOL_INTPUT_SIZE
+                                            "int_input"
+                                          INT_INPUT_SIZE
+                            "signature (previous chars)"   if SECURE
+                                           64
+
+
+
+
+--> Conf "uint" "uint" "uint"
+     4	   4	  4	 4     
+    "signature (previous chars)"  if SECURE
+            64  
+
+                                Conf "uint" "uint" "uint" <--
+                                  4	   4	    4	     4     
+                            "signature (previous chars)"   if SECURE
+                                           64
+
+---------------------------------------------------------CONFIG----------------------------------------------------------------------------
+if Data message bgins with "Conf", enter config mode
+All following Data messages can be sent in any order (Arduino then PC and vice versa)
+RePK can be sent by any party without the other party doing the same
+Empty data is sent to save and exit config mode
+Only empty data is aes encrypted
+
+
+
+-->ReDH "PUK" "sign (96 previous chars)"
+    4	  44		      64
+									
+		ReDH "PUK" "sign (96 previous chars)"  <--
+		 4	  44          64		
+
+
+
+
+
+-->RePK "PUK" "sign (96 previous chars)"
+    4	  44		      64
+									
+		RePK "PUK" "sign (96 previous chars)"  <--            
+		 4	  44          64
+
+
+
+
+
+--> Data "uint" "uint" "uint"
+     4	   4	  4	 4    
+    "signature (previous chars)"  if SECURE
+            64  
+
+				Data "uint" "uint" "uint" <--
+                                  4	   4	    4	     4  
+                            "signature (previous chars)"   if SECURE
+                                           64
