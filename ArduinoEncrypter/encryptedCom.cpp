@@ -4,8 +4,7 @@
 namespace	communication
 {
   EncryptedCom::EncryptedCom()
-  {
-  }
+  {}
 
   void EncryptedCom::setup()
   {
@@ -18,22 +17,35 @@ namespace	communication
     _encryptor.setKey(_keys.getSharedKey());
   }
 
-
   void EncryptedCom::loop()
   {   
     uint dataBuffer[MaxUintSizeComIO];
     int received = receive((uint8_t*)dataBuffer, HeaderSizeInByte);
 
     if (!(_digitalsOutputs.empty() &&  _analogOutputs.empty()))
-      outputsSend(dataBuffer);
-    if (received) // todo add control
+      outputsSend(dataBuffer + makeHeader((uint8_t*)dataBuffer));
+    if (received) // todo add control huge int
       inputsReceive(dataBuffer);
     
   }
-
-  void EncryptedCom::inputsReceive(uint* data)
+  bool EncryptedCom::controlHeader(uint8_t * header)
   {
-    uint i = 0;
+    return (memcmp(header, DataHeaderDescritption, DataHeaderDescritptionSize) == 0
+            && ++_serverSequence == (unsigned int*)(header + DataHeaderDescritptionSize));
+  }
+  int EncryptedCom::makeHeader(uint8_t * data)
+  {
+    for (uint8_t i = 0; i < DataHeaderDescritptionSize ; ++i)
+      data[i] = DataHeaderDescritption[i];
+    ++_arduinoSequence ;
+    for (uint8_t i; i < HeaderSequenceSizeInUint ; ++i)
+      ((unsigned int*)data)[i+1] = _arduinoSequence[i];
+    return encrypt::IntPerBlock;
+  }
+
+  void EncryptedCom::inputsReceive(unsigned int* data)
+  {
+    unsigned int i = 0;
     for (digitalInput* input : _digitalsInputs)
     { 
       uint8_t bitPos = i++ % encrypt::BitPerBlock;
@@ -42,7 +54,7 @@ namespace	communication
         while(!receive((uint8_t *)data,encrypt::BlockSize));
         data += LineSizeInUint;
       }
-      input->set(bitRead(data[bitPos/encrypt::BitInUint], encrypt::BitInUint - bitPos%encrypt::BitInUint) );
+      input->set(bitRead(data[bitPos/encrypt::BitInUint], encrypt::BitInUint - bitPos%encrypt::BitInUint));
     }
 
     i = 0;
@@ -59,7 +71,7 @@ namespace	communication
     }
   }
   
-  void EncryptedCom::outputsSend(uint* data)
+  void EncryptedCom::outputsSend(unsigned int* data)
   {
     uint messageLenght = 0;
     uint i = 0;

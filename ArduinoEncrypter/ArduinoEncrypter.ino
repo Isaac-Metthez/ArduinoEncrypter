@@ -17,14 +17,13 @@ void setup()
 
   // globals::com.setup();
 
-  globals::com.AddInput(new communication::digitalInput([](bool value) -> void { digitalWrite(constants::ledPin, value);}));
-  globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-
-
+  // globals::com.AddInput(new communication::digitalInput([](bool value) -> void { digitalWrite(constants::ledPin, value);}));
+  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
 }
 void loop()
 {
-  globals::com.loop();
+  // globals::com.loop();
+  
 
 
 

@@ -7,7 +7,7 @@
 
 namespace	wifi
 {
-  constexpr char *IP = "192.168.41.121";
+  constexpr char *IP = "192.168.169.155";
   constexpr uint16_t Port = 20582;
   class connection
   {
@@ -19,4 +19,5 @@ namespace	wifi
     WiFiClient &getClient() {return _client;};
   };
 }
+
 #endif
