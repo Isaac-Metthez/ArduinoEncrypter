@@ -1,16 +1,15 @@
 #ifndef ComIO
 #define ComIO
-#include "encryptedCom.hpp"
+
 namespace	communication
 {
   template<typename  T = bool>
   class Input
   {
     protected:
-      friend class EncryptedCom;
       void (*_setValue)(T);
-      void set(T value){(*_setValue)(value);}
     public:
+      void set(T value){(*_setValue)(value);}
       Input(void (*setValue)(T) ):_setValue(setValue){}
   };
   
@@ -18,10 +17,9 @@ namespace	communication
   class Output
   {
     protected:
-      friend class EncryptedCom;
       T (*_getValue)();
-      T get(){return (*_getValue)();}
     public:
+      T get(){return (*_getValue)();}
       Output(T (*getValue)()):_getValue(getValue){}
   };
   
