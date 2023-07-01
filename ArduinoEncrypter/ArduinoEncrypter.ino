@@ -11,41 +11,29 @@ namespace	constants
 namespace	globals
 {  
   communication::Com com;
-  bool test;
+  bool test = false;
+  bool send = false;
+  int counter = 0;
 }
 
 void setup()
 {
   Serial.begin(9600);
   pinMode(constants::ledPin, OUTPUT);
+  globals::com.setConditionSendOutput([]() -> bool { if (globals::send) {globals::send = false; return true;} return false;});
 
 
+  globals::com.AddInput(new communication::digitalInput([](bool value) -> void { globals::send = value;}));
   globals::com.AddInput(new communication::digitalInput([](bool value) -> void { digitalWrite(constants::ledPin, value);}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  // globals::com.AddOutput(new communication::digitalOutput([]() -> bool { return  !globals::test;}));
-  globals::com.AddOutput(new communication::analogOutput([]() -> int { return  255;}));
 
-  globals::com.setConditionSendOutput([]() -> bool { return  true;});
+  globals::com.AddOutput(new communication::digitalOutput([]() -> bool { globals::test = !globals::test; return  globals::test;}));
+
+  globals::com.AddOutput(new communication::analogOutput([]() -> int { return  ++globals::counter;}));
+
   globals::com.setup();
-
 }
 void loop()
 {
-  delay(1000);
   globals::com.loop();
   globals::test = !globals::test;
 
