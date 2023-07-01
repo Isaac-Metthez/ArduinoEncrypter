@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <sstream>
 #include <filesystem>
@@ -13,58 +15,64 @@
 #include "osrng.h"
 #include "files.h"
 #include "filters.h"
+#include "modes.h"
 #include "hex.h"
 #include "base64.h"
+#include "rijndael.h"
 
 #pragma warning(pop)
 
-#pragma once
-namespace Encryption {
-	#define AUTH_KEYS_PATH ".\\authKeys\\"
-	#define	PRIVATE_KEY_FILE "key"
-	#define PUBLIC_KEY_FILE "key.pub"
-
-	#define CLIENTS_KEYS_PATH ".\\knownClients\\"
+namespace encryption {
+	//CHANGE ON RELEASE
+	constexpr auto PRIVATE_KEY_FILE = ".\\authKeys\\key";
+	constexpr auto PUBLIC_KEY_FILE = ".\\authKeys\\key.pub";
+	constexpr auto CLIENTS_KEYS_PATH = ".\\knownClients";
 	
-	#define ED25519_PRK_HEX_HEADER "302e020100300506032b657004220420"
-	#define ED25519_PUK_HEX_HEADER "302a300506032b6570032100"
-
-	#define BOOL_SIZE 8
-	#define INT_SIZE 4
+	constexpr auto AUTHENTICATION_HEADER = "AuPK";
+	constexpr auto AGREEMENT_HEADER = "DHPK";
+	constexpr auto DATA_HEADER = "Data";
+	constexpr auto ED25519_PRK_HEX_HEADER = "302e020100300506032b657004220420";
+	constexpr auto ED25519_PUK_HEX_HEADER = "302a300506032b6570032100";
+	constexpr auto B64_KEY_LENGTH = 44;
+	constexpr auto SIGNATURE_LENGTH = 64;
+	constexpr auto BOOL_SIZE = 8;
+	constexpr auto INT_SIZE = 4;
 
 	class Crypto
 	{
 		private:
-			static CryptoPP::ed25519::Signer serverSigner;
-			static CryptoPP::ed25519::Verifier serverVerifier;
-			static CryptoPP::ed25519::Verifier clientVerifier;
-			static CryptoPP::x25519 ecdh;
-			static CryptoPP::SecByteBlock sharedSecret;
-			static int nbClients;
-			static unsigned int serverSequenceNumber0;
-			static unsigned int serverSequenceNumber1;
-			static unsigned int serverSequenceNumber2;
-			static unsigned int clientSequenceNumber0;
-			static unsigned int clientSequenceNumber1;
-			static unsigned int clientSequenceNumber2;
-			static std::string authMessage;
-			static std::string dataMessage;
+			CryptoPP::ed25519::Signer serverSigner;
+			CryptoPP::ed25519::Verifier serverVerifier;
+			CryptoPP::ed25519::Verifier clientVerifier;
+			CryptoPP::x25519 ecdh;
+			CryptoPP::SecByteBlock sharedSecret;
+			CryptoPP::SecByteBlock serverIv;
+			CryptoPP::SecByteBlock clientIv;
+			
+			std::string authMessage;
+			std::string dataMessage;
+			int nbClients;
 
 			template <typename Encoder>
-			static std::string encode(std::string plainStr);
+			std::string encode(std::string plainStr);
 			template <typename Decoder>
-			static std::string decode(std::string encodedStr);
+			std::string decode(std::string encodedStr);
 		public:
-			static void loadAuthKeys();
-			static void test(std::string testStr);
-			static bool checkForKnownKey(std::string rawKey);
-			static void saveClientPublicKey();
+			Crypto();
+			void loadAuthKeys();
+			bool checkForKnownKey(std::string rawKey);
+			void saveClientPublicKey();
 			template <typename KeyType>
-			static void loadPublicKeyFromData(std::string rawKey, KeyType& key);
-			static std::string sign(std::string plainStr);
-			static bool verifySignature(std::string authMessage, std::string signature);
-			static void makeAgreement(std::string rawKey);
-			static std::string getAuthMessage();
+			void loadPublicKeyFromData(std::string rawKey, KeyType& key);
+			std::string sign(std::string plainStr);
+			bool verifySignature(std::string authMessage, std::string signature);
+			void makeAgreement(std::string rawKey);
+			void encrypt(char* plainStr, int size);
+			void decrypt(char* cipher, int size);
+			void setIv(CryptoPP::SecByteBlock& iv);
+			void setIv(CryptoPP::SecByteBlock& iv, std::string );
+			std::string getAuthMessage();
+			std::string getDataMessage();
 	};
 
 	template<typename KeyType>

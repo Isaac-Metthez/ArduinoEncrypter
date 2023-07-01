@@ -1,39 +1,22 @@
 ﻿#include "../include/crypto.h"
 
-namespace Encryption {
-
-	CryptoPP::ed25519::Signer Crypto::serverSigner;
-	CryptoPP::ed25519::Verifier Crypto::serverVerifier;
-	CryptoPP::ed25519::Verifier Crypto::clientVerifier;
-	CryptoPP::x25519 Crypto::ecdh;
-	CryptoPP::SecByteBlock Crypto::sharedSecret;
-	int Crypto::nbClients;
-	unsigned int Crypto::serverSequenceNumber0 = 0;
-	unsigned int Crypto::serverSequenceNumber1 = 0;
-	unsigned int Crypto::serverSequenceNumber2 = 0;
-	unsigned int Crypto::clientSequenceNumber0 = 0;
-	unsigned int Crypto::clientSequenceNumber1 = 0;
-	unsigned int Crypto::clientSequenceNumber2 = 0;
-
-	std::string Crypto::authMessage;
-	std::string Crypto::dataMessage;
-
-	void Crypto::test(std::string testStr) {
-	
+namespace encryption {
+	Crypto::Crypto() {
+		loadAuthKeys();
+		setIv(serverIv);
+		setIv(clientIv);
 	}
 
 	void Crypto::loadAuthKeys() {
-
 		CryptoPP::AutoSeededRandomPool prng;
-
 		//PRK
-		std::ifstream prkFile(AUTH_KEYS_PATH PRIVATE_KEY_FILE);
+		std::ifstream prkFile(PRIVATE_KEY_FILE);
 		if(prkFile.good())
-			serverSigner.AccessPrivateKey().Load(CryptoPP::FileSource(AUTH_KEYS_PATH PRIVATE_KEY_FILE, true).Ref());
+			serverSigner.AccessPrivateKey().Load(CryptoPP::FileSource(PRIVATE_KEY_FILE, true).Ref());
 		else {
 			serverSigner.AccessPrivateKey().GenerateRandom(prng);
 
-			CryptoPP::FileSink fsPRK(AUTH_KEYS_PATH PRIVATE_KEY_FILE);
+			CryptoPP::FileSink fsPRK(PRIVATE_KEY_FILE);
 			serverSigner.GetPrivateKey().Save(fsPRK);
 		}
 		std::string privateKey;
@@ -43,12 +26,12 @@ namespace Encryption {
 		std::cout << "Private Key:\t" << encodedPrivateKey << std::endl << std::endl;
 
 		//PUK
-		std::ifstream pukFile(AUTH_KEYS_PATH PUBLIC_KEY_FILE);
+		std::ifstream pukFile(PUBLIC_KEY_FILE);
 		if(pukFile.good())
-			serverVerifier.AccessPublicKey().Load(CryptoPP::FileSource(AUTH_KEYS_PATH PUBLIC_KEY_FILE, true).Ref());
+			serverVerifier.AccessPublicKey().Load(CryptoPP::FileSource(PUBLIC_KEY_FILE, true).Ref());
 		else {
 			serverVerifier = CryptoPP::ed25519::Verifier(serverSigner);
-			CryptoPP::FileSink fsPUK(AUTH_KEYS_PATH PUBLIC_KEY_FILE);
+			CryptoPP::FileSink fsPUK(PUBLIC_KEY_FILE);
 			serverVerifier.GetPublicKey().Save(fsPUK);
 		}
 		std::string publicKey;
@@ -56,7 +39,7 @@ namespace Encryption {
 		std::string encodedPublicKey;
 		encodedPublicKey = encode<CryptoPP::Base64Encoder>(publicKey);
 		std::cout << "Public Key:\t" << encodedPublicKey << std::endl << std::endl;
-		authMessage += "AuPK" + encodedPublicKey.substr(16, 44);
+		authMessage += AUTHENTICATION_HEADER + encodedPublicKey.substr(16, 44);
 	}
 
 	bool Crypto::checkForKnownKey(std::string rawKey) {
@@ -94,17 +77,13 @@ namespace Encryption {
 		CryptoPP::StringSource(plainStr, true, new CryptoPP::SignerFilter(prng, serverSigner, new CryptoPP::StringSink(signature)));
 
 		std::cout << "Signature: " << encode<CryptoPP::HexEncoder>(signature) << "\n" << std::endl;
-		//signature = encode<CryptoPP::HexEncoder>(signature);
 		return signature;
 	}
 
-	bool Crypto::verifySignature(std::string authMessage, std::string signature) {
+	bool Crypto::verifySignature(std::string message, std::string signature) {
 		CryptoPP::AutoSeededRandomPool prng;
 		bool result = false;
-		//signature = decode<CryptoPP::HexDecoder>(signature); //COMMENT
-		CryptoPP::StringSource(signature + authMessage, true, new CryptoPP::SignatureVerificationFilter(clientVerifier, new CryptoPP::ArraySink((CryptoPP::byte*)&result, sizeof(result))));
-
-		std::cout << "Signature on message verified: " << std::boolalpha << result << "\n" << std::endl;
+		CryptoPP::StringSource(signature + message, true, new CryptoPP::SignatureVerificationFilter(clientVerifier, new CryptoPP::ArraySink((CryptoPP::byte*)&result, sizeof(result))));
 		return result;
 	}
 
@@ -134,12 +113,55 @@ namespace Encryption {
 		std::cout << "PRK: " << prkStr << std::endl;
 		std::cout << "PUK: " << pukStr << std::endl;
 		std::cout << "Shared secret: " << secretStr << std::endl;
-		authMessage += "DHPK" + pukStr;
+		authMessage += AGREEMENT_HEADER + pukStr;
 
 	}
+
+	void Crypto::encrypt(char* plain, int size) {
+		unsigned char* cipher = new unsigned char[size];
+		CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
+		encryptor.SetKeyWithIV(sharedSecret, sharedSecret.size(), serverIv);
+
+		CryptoPP::ArraySource(reinterpret_cast<const CryptoPP::byte*>(plain), size, true,
+			new CryptoPP::StreamTransformationFilter(encryptor,
+				new CryptoPP::ArraySink(cipher, size), CryptoPP::StreamTransformationFilter::NO_PADDING));
+
+		std::memcpy(plain, cipher, size);
+
+		delete[] cipher;
+	}
+
+	void Crypto::decrypt(char* cipher, int size) {
+		unsigned char* recovered = new unsigned char[size];
+		CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption decryptor;
+		decryptor.SetKeyWithIV(sharedSecret, sharedSecret.size(), clientIv);
+
+		CryptoPP::ArraySource(reinterpret_cast<const CryptoPP::byte*>(cipher), size, true,
+			new CryptoPP::StreamTransformationFilter(decryptor,
+				new CryptoPP::ArraySink(recovered, size), CryptoPP::StreamTransformationFilter::NO_PADDING));
+
+		std::memcpy(cipher, recovered, size);
+
+		delete[] recovered;
+	}
+
+
+	void Crypto::setIv(CryptoPP::SecByteBlock& iv) {
+		iv.resize(CryptoPP::AES::BLOCKSIZE);
+		std::memset(iv, 0, iv.size());
+	}
+
+	void Crypto::setIv(CryptoPP::SecByteBlock& iv, std::string ivStr) {
+		std::memcpy(iv.data(), ivStr.substr(ivStr.size() - 16).data(), iv.size());
+	}
+
 	std::string Crypto::getAuthMessage()
 	{
 		authMessage += sign(authMessage);
 		return authMessage;
+	}
+	
+	std::string Crypto::getDataMessage() {
+		return dataMessage;
 	}
 }

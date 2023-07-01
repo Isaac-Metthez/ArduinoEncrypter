@@ -21,11 +21,13 @@
   <ItemGroup>
     <ClCompile Include="src\crypto.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\tcpServer.cpp" />
+    <ClCompile Include="src\server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\crypto.h" />
-    <ClInclude Include="include\tcpServer.h" />
+    <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\IO.h" />
+    <ClInclude Include="include\server.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
