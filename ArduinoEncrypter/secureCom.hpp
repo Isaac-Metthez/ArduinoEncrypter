@@ -1,22 +1,21 @@
-#ifndef ENCRYPTEDCOM
-#define ENCRYPTEDCOM
-#include "com.hpp"
-#include "encryptor.hpp"
-#include "keys.hpp"
+#ifndef SECURECOM
+#define SECURECOM
+#include "encryptedCom.hpp"
 
 namespace	communication
 {
-  class EncryptedCom : public Com 
+  class SecureCom : public EncryptedCom
   {
-  protected:
-    encrypt::Keys _keys;
-    encrypt::Encryptor _encryptor;
+  protected:  
+    unsigned int _dataReceived[MaxUintSizeComIO], _indexData;
   public:
-    void setup() override;
+    virtual void loop();
     void send(const uint8_t * data, const int dataSize) override;
     void send(const String &message) override;
     int receive(uint8_t * data, int dataSize) override;
     int receive(String &message, int maxLen = 255) override;
+    int receiveMsg(int dataSize);
   };
+
 }
 #endif

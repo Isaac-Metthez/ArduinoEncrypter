@@ -17,6 +17,7 @@ namespace	encrypt
   constexpr auto KeySize = 32;
   constexpr auto KeySizeBase64 = 44;
   constexpr auto SignSize = 64;
+  constexpr auto SignSizeInUint = 16;
   constexpr auto AuPK = "AuPK";
   constexpr auto DHPK = "DHPK";
   constexpr auto HeaderSize = 4;
@@ -45,6 +46,8 @@ namespace	encrypt
     void agree(WiFiClient &client);
 
     uint8_t *getPublicKey() {return _publicKey;};
+    uint8_t *getPrivateKey() {return _privateKey;};
+    uint8_t *getServerKey() {return _serverKey;};
     uint8_t *getSharedKey() {return _sharedKey;};
   };
 }
