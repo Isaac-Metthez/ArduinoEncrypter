@@ -21,5 +21,6 @@ int main() {
     catch (const std::exception& e) {
 	    std::cout << e.what();
     }
+    system("pause");
     return 0;
 }

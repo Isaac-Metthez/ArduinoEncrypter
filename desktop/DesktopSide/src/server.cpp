@@ -2,8 +2,11 @@
 #include <chrono>
 namespace com {
     bool Server::start() {
-        bool result = false;
         security = ComSecurityLevel::SIMPLE;
+        sendOutputs = true;
+        
+        
+        bool result = false;
         crypto = new encryption::Crypto();
         inputBoolPayloadSize = 16 * (digitalInputs.size() % BIT_PER_BLOCK == 0 ? digitalInputs.size() / BIT_PER_BLOCK : digitalInputs.size() / BIT_PER_BLOCK + 1);
         inputIntPayloadSize= 16 * (analogInputs.size() % INT_PER_BLOCK == 0 ? analogInputs.size() / INT_PER_BLOCK : analogInputs.size() / INT_PER_BLOCK + 1);
@@ -11,7 +14,6 @@ namespace com {
         outputBoolPayloadSize = 16 * (digitalOutputs.size() % BIT_PER_BLOCK == 0 ? digitalOutputs.size() / BIT_PER_BLOCK : digitalOutputs.size() / BIT_PER_BLOCK + 1);
         outputIntPayloadSize= 16 * (analogOutputs.size() % INT_PER_BLOCK == 0 ? analogOutputs.size() / INT_PER_BLOCK : analogOutputs.size() / INT_PER_BLOCK + 1);
         outputPayloadSize = outputBoolPayloadSize + outputIntPayloadSize;
-        sendOutputs = true;
         ++clientSequence;
         ++serverSequence;
 
@@ -48,6 +50,7 @@ namespace com {
                     std::string authMessage = crypto->getAuthMessage();
                     sendToSocket(clientSocket, authMessage.c_str(), authMessage.size());
                     requiredBytes = DATA_HEADER_LENGTH + inputPayloadSize + (security == ComSecurityLevel::SECURE ? encryption::SIGNATURE_LENGTH : 0);
+                    sendOutputs = true;
                 }
                 else {
                     break;
@@ -81,7 +84,7 @@ namespace com {
         }
         auto endTime = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-        std::cout << "Time: " << duration << std::endl;
+        std::cout << "Time: " << duration << " ms" << std::endl;
 
         closesocket(clientSocket);
         closesocket(serverSocket);
