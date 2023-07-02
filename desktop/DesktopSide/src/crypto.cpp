@@ -127,7 +127,7 @@ namespace encryption {
 				new CryptoPP::ArraySink(cipher, size), CryptoPP::StreamTransformationFilter::NO_PADDING));
 
 		std::memcpy(plain, cipher, size);
-
+		setIv(serverIv, std::string(reinterpret_cast<char*>(cipher), size));
 		delete[] cipher;
 	}
 
@@ -141,7 +141,7 @@ namespace encryption {
 				new CryptoPP::ArraySink(recovered, size), CryptoPP::StreamTransformationFilter::NO_PADDING));
 
 		std::memcpy(cipher, recovered, size);
-
+		setIv(clientIv, std::string(reinterpret_cast<char*>(cipher), size));
 		delete[] recovered;
 	}
 
@@ -159,9 +159,5 @@ namespace encryption {
 	{
 		authMessage += sign(authMessage);
 		return authMessage;
-	}
-	
-	std::string Crypto::getDataMessage() {
-		return dataMessage;
 	}
 }

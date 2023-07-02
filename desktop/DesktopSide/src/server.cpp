@@ -3,7 +3,7 @@
 namespace com {
     bool Server::start() {
         security = ComSecurityLevel::SIMPLE;
-        sendOutputs = true;
+        sendOutputs = security == ComSecurityLevel::SIMPLE;
         
         
         bool result = false;
@@ -19,7 +19,7 @@ namespace com {
 
         switch (security) {
             case ComSecurityLevel::SIMPLE:
-                requiredBytes = DATA_HEADER_LENGTH + inputBoolPayloadSize;
+                requiredBytes = DATA_HEADER_LENGTH + inputPayloadSize;
                 break;
             case ComSecurityLevel::ENCRYPTED:
             case ComSecurityLevel::SECURE:
@@ -58,7 +58,7 @@ namespace com {
             }
             else {
                 if (security != ComSecurityLevel::SECURE || crypto->verifySignature(msg, msg + DATA_HEADER_LENGTH + inputPayloadSize - encryption::SIGNATURE_LENGTH)) {
-                    if(security >= ComSecurityLevel::SIMPLE)
+                    if(security > ComSecurityLevel::SIMPLE)
                         crypto->decrypt(msg, DATA_HEADER_LENGTH + inputPayloadSize);
                     if (std::strncmp(msg, encryption::DATA_HEADER, std::strlen(encryption::DATA_HEADER)) == 0) {
                         if (verifySequence(msg + std::strlen(encryption::DATA_HEADER))) {
@@ -266,8 +266,9 @@ namespace com {
 
     bool Server::authenticate(std::string authenticationMsg) {
         bool knownClient = crypto->checkForKnownKey(authenticationMsg.substr(std::strlen(encryption::AUTHENTICATION_HEADER), encryption::B64_KEY_LENGTH));
-        
-        if (!crypto->verifySignature(authenticationMsg.substr(0, 2 * (std::strlen(encryption::AUTHENTICATION_HEADER) + encryption::B64_KEY_LENGTH)), authenticationMsg.substr(authenticationMsg.size() - encryption::SIGNATURE_LENGTH, encryption::SIGNATURE_LENGTH))) {
+        std::string msg = authenticationMsg.substr(0, 2 * (std::strlen(encryption::AUTHENTICATION_HEADER) + encryption::B64_KEY_LENGTH));
+        std::string signature = authenticationMsg.substr(msg.size(), encryption::SIGNATURE_LENGTH);
+        if (!crypto->verifySignature(msg, signature)) {
             return false;
         }
         else if (!knownClient) {    

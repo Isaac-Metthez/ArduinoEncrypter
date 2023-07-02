@@ -50,7 +50,6 @@ namespace encryption {
 			CryptoPP::SecByteBlock clientIv;
 			
 			std::string authMessage;
-			std::string dataMessage;
 			int nbClients;
 
 			template <typename Encoder>
@@ -72,7 +71,6 @@ namespace encryption {
 			void setIv(CryptoPP::SecByteBlock& iv);
 			void setIv(CryptoPP::SecByteBlock& iv, std::string );
 			std::string getAuthMessage();
-			std::string getDataMessage();
 	};
 
 	template<typename KeyType>
