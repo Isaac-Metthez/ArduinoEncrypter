@@ -11,7 +11,7 @@ namespace	wifi
       status = WiFi.begin(wifi::identifier::SSID, wifi::identifier::PassWord);
 
       // wait 2 seconds for connection:
-      if (status != WL_CONNECTED)
+      if (status == WL_CONNECTED)
         break;
       else
         delay(2000);

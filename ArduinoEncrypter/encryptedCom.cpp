@@ -3,106 +3,16 @@
 
 namespace	communication
 {
-  EncryptedCom::EncryptedCom()
-  {}
 
   void EncryptedCom::setup()
   {
-    _connection.connect();
+    Com::setup();
 
     _keys.init(TransistorNoiseSource(A1));
 
     _keys.agree(_connection.getClient());
 
     _encryptor.setKey(_keys.getSharedKey());
-  }
-
-  void EncryptedCom::loop()
-  {   
-    uint dataBuffer[MaxUintSizeComIO];
-    int received = receive((uint8_t*)dataBuffer, HeaderSizeInByte);
-
-    if (!(_digitalsOutputs.empty() &&  _analogOutputs.empty()))
-      outputsSend(dataBuffer + makeHeader((uint8_t*)dataBuffer));
-    if (received) // todo add control huge int
-      inputsReceive(dataBuffer);
-    
-  }
-  bool EncryptedCom::controlHeader(uint8_t * header)
-  {
-    return (memcmp(header, DataHeaderDescritption, DataHeaderDescritptionSize) == 0
-            && ++_serverSequence == (unsigned int*)(header + DataHeaderDescritptionSize));
-  }
-  int EncryptedCom::makeHeader(uint8_t * data)
-  {
-    for (uint8_t i = 0; i < DataHeaderDescritptionSize ; ++i)
-      data[i] = DataHeaderDescritption[i];
-    ++_arduinoSequence ;
-    for (uint8_t i; i < HeaderSequenceSizeInUint ; ++i)
-      ((unsigned int*)data)[i+1] = _arduinoSequence[i];
-    return encrypt::IntPerBlock;
-  }
-
-  void EncryptedCom::inputsReceive(unsigned int* data)
-  {
-    unsigned int i = 0;
-    for (digitalInput* input : _digitalsInputs)
-    { 
-      uint8_t bitPos = i++ % encrypt::BitPerBlock;
-      if (!bitPos)
-      {
-        while(!receive((uint8_t *)data,encrypt::BlockSize));
-        data += LineSizeInUint;
-      }
-      input->set(bitRead(data[bitPos/encrypt::BitInUint], encrypt::BitInUint - bitPos%encrypt::BitInUint));
-    }
-
-    i = 0;
-    for (analogInput* input : _analogInputs)
-      { 
-        uint8_t intPos = i++ % encrypt::IntPerBlock;
-        if (!intPos)
-        {
-          while(!receive((uint8_t *)data,encrypt::BlockSize));
-          if (i)
-            data += LineSizeInUint;
-        }
-        input->set(data[intPos]);
-    }
-  }
-  
-  void EncryptedCom::outputsSend(unsigned int* data)
-  {
-    uint messageLenght = 0;
-    uint i = 0;
-    for (digitalOutput* output : _digitalsOutputs)
-    { 
-      uint8_t bitPos = i++ % encrypt::BitPerBlock;
-      if (!bitPos)
-      {
-        while(!receive((uint8_t *)data,encrypt::BlockSize));
-        data += LineSizeInUint;
-        messageLenght += encrypt::BlockSize;
-      }
-      bitWrite(data[bitPos/encrypt::BitInUint], encrypt::BitInUint - bitPos%encrypt::BitInUint, output->get());
-    }
-
-    i = 0;
-    for (analogOutput* output : _analogOutputs)
-    { 
-      uint8_t intPos = i++ % encrypt::IntPerBlock;
-      if (!intPos)
-      {
-        while(!receive((uint8_t *)data,encrypt::BlockSize));
-        if (i)
-        {
-          data += LineSizeInUint;
-          messageLenght += encrypt::BlockSize;
-        }
-      }
-      data[intPos] = output->get();
-    }
-      send((uint8_t *)data,messageLenght);
   }
 
   void EncryptedCom::send(const uint8_t * data, const int dataSize)
@@ -170,6 +80,6 @@ namespace	communication
       message += (char*)decrypted;
       i += encrypt::BlockSize;
     }
-    return message.length();
+    return i;
   }
 }
